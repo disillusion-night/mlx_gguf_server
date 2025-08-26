@@ -39,7 +39,7 @@ class TokenizerService:
         messages: List[Dict[str, str]],
         tools: Any = None,
         add_generation_prompt: bool = True
-    ) -> str:
+    ) -> Any:
         """
         使用分词器将 messages 转换为聊天格式的文本
         """
@@ -71,7 +71,7 @@ class TokenizerService:
                 logger.debug(f"{chat_prompt=}")
         return chat_prompt
 
-    def count_tokens(self, model: LLMModel, params: TokenCountParams) -> TaskResponse:
+    def count_tokens(self, llm_model: LLMModel, params: TokenCountParams) -> TaskResponse:
         """
         计算给定输入的 token 数量并返回结果。
         """
@@ -84,6 +84,9 @@ class TokenizerService:
         messages = params.messages
 
         try:
+            # Ensure tokenizer is available at runtime
+            assert tokenizer is not None, "Tokenizer is not initialized"
+
             if model_type == 'mlx':
                 if messages != []:
                     tokenized_input = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True)

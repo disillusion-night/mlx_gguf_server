@@ -1,4 +1,4 @@
-from safetensors.torch import safe_open
+from safetensors import safe_open
 from fastapi import HTTPException, UploadFile
 import re
 import os
@@ -38,7 +38,8 @@ async def process_upload_file(file: UploadFile, file_path: str) -> str:
     with open(file_path, "wb") as buffer:
         buffer.write(await file.read())
 
-    _, ext = os.path.splitext(file.filename)
+    filename = getattr(file, "filename", None) or ""
+    _, ext = os.path.splitext(filename)
 
     # Decompress if necessary
     if ext == '.safetensors':

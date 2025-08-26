@@ -13,25 +13,26 @@ class CompletionParams(BaseModel):
     apply_chat_template: bool = False
     complete_text: bool = False
     top_p: Optional[float] = None
-    stop: Optional[list] = []
+    # 通用 stop（用于 mlx 与 llama-cpp，不建议同时提供 prompt 与 messages）
+    stop: Optional[list] = None
     logit_bias: Optional[Dict[int, float]] = None # 仅用于 mlx
     repetition_penalty: Optional[float] = None    # 仅用于 mlx
     repetition_context_size: Optional[int] = 20   # 仅用于 mlx
     use_kv_cache: bool = False          # 仅用于 mlx
     tools: Optional[list] = None        # 仅用于 mlx
-    top_k: int = 0                      # 仅用于 llama-cpp
+
+    # llama-cpp 特有参数
+    top_k: int = 40                     # 仅用于 llama-cpp
     min_p: float = 0.05                 # 仅用于 llama-cpp
     typical_p: float = 1.0              # 仅用于 llama-cpp
-    stop: list = []                     # 仅用于 llama-cpp
     frequency_penalty: float = 0.0      # 仅用于 llama-cpp
     presence_penalty: float = 0.0       # 仅用于 llama-cpp
     repet_penalty: float = 1.1          # 仅用于 llama-cpp
-    top_k: int = 40                     # 仅用于 llama-cpp
     mirostat_mode: int = 0              # 仅用于 llama-cpp
     mirostat_tau: float = 5.0           # 仅用于 llama-cpp
     mirostat_eta: float = 0.1           # 仅用于 llama-cpp
 
-    chat_format: str = None # 仅用于 llama-cpp
+    chat_format: Optional[str] = None # 仅用于 llama-cpp
 
     @model_validator(mode='after')
     def validate_prompt_and_messages(self) -> Self:
@@ -57,7 +58,9 @@ class TokenCountParams(BaseModel):
 class ModelLoadParams(BaseModel):
     llm_model_name: str
     llm_model_path: str = Field(default="", exclude=True)
-    chat_format: str = None # 仅用于 llama-cpp
+    adapter_name: Optional[str] = None
+    adapter_path: Optional[str] = Field(default=None, exclude=True)
+    chat_format: Optional[str] = None # 仅用于 llama-cpp
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
     logit_bias: Optional[Dict[int, float]] = None

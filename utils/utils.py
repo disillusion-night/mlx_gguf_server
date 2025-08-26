@@ -29,3 +29,24 @@ def create_model_list():
     return models
 
 
+def create_adapter_list():
+    """
+    扫描仓库下的 adapters/ 目录并返回 {adapter_name: {path, size}} 的映射。
+    适配器可以是单文件（例如 .safetensors）或目录。
+    """
+    adapters = {}
+    adapters_dir = "adapters"
+    if not os.path.exists(adapters_dir):
+        return adapters
+
+    for f in os.listdir(adapters_dir):
+        full = os.path.join(adapters_dir, f)
+        if os.path.isdir(full) or os.path.isfile(full):
+            adapter_name = f
+            adapter_path = full
+            adapter_size = get_model_size(adapter_path)
+            adapters[adapter_name] = {"path": adapter_path, "size": adapter_size}
+
+    return adapters
+
+

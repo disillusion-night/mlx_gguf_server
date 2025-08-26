@@ -1,5 +1,4 @@
 import os
-import mlx_whisper
 from typing import Optional, Dict, Any
 
 class AudioTranscriber:
@@ -7,7 +6,7 @@ class AudioTranscriber:
     Whisper 转录工具封装，提供模型加载、转录与临时文件管理功能。
     """
 
-    def __init__(self, model_path: str = None, file_path: Optional[str] = None):
+    def __init__(self, model_path: Optional[str] = None, file_path: Optional[str] = None):
         """
         AudioTranscriber 的构造函数。
 
@@ -32,11 +31,15 @@ class AudioTranscriber:
         if not self.file_path:
             raise ValueError("File path is not set. Use set_file_path() or provide it during initialization.")
         try:
+            # 延迟导入以避免在服务启动时加载大型依赖（例如 scipy）
+            import mlx_whisper
+
+            path_or_hf_repo = self.model_path or ""
             if language:
-                result = mlx_whisper.transcribe(self.file_path, path_or_hf_repo=self.model_path, language=language)
+                result = mlx_whisper.transcribe(self.file_path, path_or_hf_repo=path_or_hf_repo, language=language)
             else:
-                result = mlx_whisper.transcribe(self.file_path, path_or_hf_repo=self.model_path)
-            
+                result = mlx_whisper.transcribe(self.file_path, path_or_hf_repo=path_or_hf_repo)
+
             return {"text": result["text"]}
         except Exception as e:
             return {"error": f"Transcription failed: {str(e)}"}
