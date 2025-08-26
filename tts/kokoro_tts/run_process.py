@@ -6,13 +6,14 @@ def run(params, queue):
     try:
         audio_data = generate(params)
         if isinstance(audio_data, bytes):
-            #  すでにbytesデータの場合はそのまま送信
+            # 如果已经是 bytes 数据则原样发送
             queue.put(audio_data)
         elif isinstance(audio_data, str):
-             #  文字列データの場合もそのまま
+            # 如果是字符串数据也原样发送
             queue.put(audio_data)
         else:
-            #  それ以外の場合エラー
+            # 其他情况则视为错误
             queue.put(json.dumps({"error":"generate.generate return not bytes or np.ndarray or str"}))
     except Exception as e:
-        queue.put(json.dumps({"error": str(e)})) # エラー時にもエラー内容を伝える
+        # 在出错时也将错误内容发送
+        queue.put(json.dumps({"error": str(e)}))

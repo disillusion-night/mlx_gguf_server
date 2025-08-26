@@ -4,37 +4,30 @@ from typing import Optional, Dict, Any
 
 class AudioTranscriber:
     """
-    A class for transcribing audio files using the mlx_whisper library.
-    It converts audio to text using mlx-whisper.
+    Whisper 转录工具封装，提供模型加载、转录与临时文件管理功能。
     """
 
     def __init__(self, model_path: str = None, file_path: Optional[str] = None):
         """
-        Constructor for the AudioTranscriber class.
+        AudioTranscriber 的构造函数。
 
-        :param model_path: Hugging Face path or local directory path to the mlx-whisper model file
-        :param file_path: Path to the audio file to be processed (optional)
+        :param model_path: Hugging Face 模型名或本地目录路径
+        :param file_path: 待处理的音频文件路径（可选）
         """
         self.model_path = model_path
         self.file_path = file_path
 
     def set_file_path(self, file_path: str):
         """
-        Sets the path of the audio file to be processed.
+        设置要处理的音频文件路径。
 
-        :param file_path: Path to the audio file
+        :param file_path: 音频文件路径
         """
         self.file_path = file_path
 
-    def transcribe(self, language: str = None) -> Dict[str, Any]:
+    def transcribe(self, language: Optional[str] = None) -> dict:
         """
-        Performs transcription on the audio file.
-
-        :param language: Language of the audio (optional). If not specified, automatic detection is attempted.
-        :return: A dictionary containing the transcription result.
-                 On success: {"text": transcription_text}
-                 On failure: {"error": error_message}
-        :raises ValueError: If the file path is not set
+        对已保存的音频文件进行转录并返回结果字典，包含文本或错误信息。
         """
         if not self.file_path:
             raise ValueError("File path is not set. Use set_file_path() or provide it during initialization.")
@@ -48,10 +41,9 @@ class AudioTranscriber:
         except Exception as e:
             return {"error": f"Transcription failed: {str(e)}"}
 
-    def delete_file(self) -> None:
+    def delete_file(self):
         """
-        Deletes the processed audio file.
-        Does nothing if the file doesn't exist.
+        删除临时保存的音频文件。
         """
         if self.file_path and os.path.exists(self.file_path):
             os.remove(self.file_path)

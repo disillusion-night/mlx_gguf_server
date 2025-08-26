@@ -24,7 +24,7 @@ from embedding.embedding_schemas import OpenAICompatibleEmbeddings
 from utils.utils import create_model_list
 from utils.kv_cache_utils import prepare_temp_dir, validate_session_id, validate_filename, process_upload_file
 from whisper_stt.whisper import AudioTranscriber
-# from logging import getLogger
+# 从 logging 导入 getLogger
 import logging
 
 logger = logging.getLogger("uvicorn")
@@ -34,14 +34,14 @@ logging.basicConfig(level=logging.INFO)
 async def lifespan(app: FastAPI):
     logger.info("starting....")
 
-    # ===== ログディレクトリの作成とロガー設定 =====
+    # ===== 创建日志目录与记录器设置 =====
     os.makedirs("logs", exist_ok=True)
 
-    # アクセスログ専用ロガーの設定
+    # 设置访问日志专用的记录器
     access_logger = logging.getLogger("access")
     access_logger.setLevel(logging.INFO)
 
-    # JSONフォーマッタの定義（別途定義が必要な場合はここに記述）
+    # 定义 JSON 格式化器（如需另行定义可在此处说明）
     class JsonFormatter(logging.Formatter):
         def format(self, record):
             log_data = {
@@ -56,7 +56,7 @@ async def lifespan(app: FastAPI):
             }
             return json.dumps(log_data, ensure_ascii=False)
 
-    # ファイルハンドラーの設定
+    # 设置文件处理器
     file_handler = logging.FileHandler("logs/access.log")
     file_handler.setFormatter(JsonFormatter())
     access_logger.addHandler(file_handler)
@@ -84,26 +84,26 @@ def recurring_task_cleanup():
 
 @app.middleware("http")
 async def access_logger(request: Request, call_next):
-    # リクエスト情報収集
+    # 收集请求信息
     start_time = time.time()
     body = await request.body()
-    request._body = body  # 再利用可能に
+    request._body = body  # 以便重复使用
 
-    # 処理実行
+    # 执行处理
     response = await call_next(request)
 
-    # ログ出力
+    # 输出日志
     duration = time.time() - start_time
 
-    # パラメータを安全に収集（messages 除外）
+    # 安全地收集参数（不包含 messages）
     try:
         body_json = json.loads(body)
-        # messages フィールドを完全削除（[REDACTED] よりも安全）
+        # 将 messages 字段替换为 [REDACTED]，比完全删除更安全
         if "messages" in body_json:
             body_json["messages"] = "[REDACTED]"
         elif "prompt" in body_json:
             body_json["prompt"] = "[REDACTED]"
-        # 大きすぎる場合は先頭3項目のみ記録
+        # 如果参数过多，仅记录前 3 项
         safe_params = dict(list(body_json.items())[:3]) if len(body_json) > 3 else body_json
     except:
         safe_params = {"raw_body_size": len(body)}
@@ -268,26 +268,26 @@ async def post_kokoro_generate(params: KokoroTtsParams):
         process = Process(target=tts.kokoro_tts.run_process.run, args=(params.model_dump(), queue))
         process.start()
         
-        audio_data = queue.get() # 結果をqueueから取得
+        audio_data = queue.get() # 从队列获取结果
         process.join()
 
         if isinstance(audio_data,str):
           try:
-              # json文字列だった場合はパース
+              # 如果是 json 字符串，则解析之
             audio_data = json.loads(audio_data)
             if "error" in audio_data:
                   raise HTTPException(status_code=500, detail=f"Error at kokoro-TTS: {audio_data['error']}")
-          except Exception: # jsonじゃない場合はそのまま
+          except Exception: # 如果不是 json，则原样返回
               pass
 
         if isinstance(audio_data,dict):
             raise HTTPException(status_code=500, detail=f"Error at kokoro-TTS: {audio_data}")
 
-        # バイト列で返す
+        # 以字节流形式返回
         logger.debug(f"debug: kokoro response: {audio_data[:100] if isinstance(audio_data, bytes) else str(audio_data)[:100]} ...")
         return Response(
             content=audio_data,
-            media_type="audio/mpeg"  # mp3形式で返す場合
+            media_type="audio/mpeg"  # 以 mp3 格式返回
         )
 
     except Exception as e:
@@ -296,7 +296,7 @@ async def post_kokoro_generate(params: KokoroTtsParams):
 @app.get("/v1/audio/transcriptions")
 async def get_audio_transcribe_status():
     """
-    Check if the audio transcription endpoint is enabled.
+    检查音频转录端点是否启用。
     """
     if app.state.enable_whisper:
         return JSONResponse(content={"status": "ready"}, status_code=200)
@@ -356,9 +356,9 @@ async def post_embeddings(params: EmbeddingsParams):
 @app.get("/v1/internal/model/kv_cache/export/{session_id}")
 async def export_kv_cache(session_id: str):
     """
-    Export a KV Cache file with optional compression.
+    导出带有可选压缩的 KV 缓存文件。
     """
-    # Validate Session ID is UUIDv4
+    # 验证会话 ID 是 UUIDv4
     validate_session_id(session_id=session_id)
 
     cache_dir = "llm_process/kv_cache/"
@@ -381,23 +381,23 @@ async def export_kv_cache(session_id: str):
 @app.post("/v1/internal/model/kv_cache/import/{session_id}")
 async def import_kv_cache(session_id: str, file: UploadFile):
     """
-    Import a KV Cache file for a specific session with strict validation.
-    Uploaded KV Cache file must be safetensors file or gz compressed safetensors.
-    Uploaded KV Cache filename must be <UUIDv4>.safetensors or <UUIDv4>.safetensors.gz. This UUID is used as session_id
+    导入特定会话的 KV 缓存文件，并进行严格验证。
+    上传的 KV 缓存文件必须是 safetensors 格式或 gz 压缩的 safetensors。
+    上传的 KV 缓存文件名必须是 <UUIDv4>.safetensors 或 <UUIDv4>.safetensors.gz。此 UUID 用作 session_id
     """
     try:
-        # Validate inputs
+        # 验证输入
         validate_session_id(session_id=session_id)
         validate_filename(session_id=session_id, filename=file.filename)
 
-        # Create temporary directory inside llm_process/kv_cache/tmp/
+        # 在 llm_process/kv_cache/tmp/ 内创建临时目录
         temp_dir = prepare_temp_dir(tmp_base_dir=app.state.tmpdir)
         upload_file_path = os.path.join(temp_dir, file.filename)
 
-        # process uploaded file
+        # 处理上传的文件
         upload_file_path = await process_upload_file(file=file, file_path=upload_file_path)
 
-        # Save to target location
+        # 保存到目标位置
         cache_dir = "llm_process/kv_cache/"
         target_path = os.path.join(cache_dir, f"{session_id}.safetensors")
         os.rename(upload_file_path, target_path)
@@ -405,7 +405,7 @@ async def import_kv_cache(session_id: str, file: UploadFile):
         return {"status": "success", "message": f"Cache {session_id} imported"}
 
     except Exception as e:
-        # Cleanup temp files on error
+        # 出错时清理临时文件
         if os.path.exists(upload_file_path):
             os.remove(upload_file_path)
         if os.path.exists(upload_file_path):
@@ -414,7 +414,7 @@ async def import_kv_cache(session_id: str, file: UploadFile):
         raise HTTPException(500, str(e)) from e
 
     finally:
-        # Ensure temp directory is cleaned up
+        # 确保清理临时目录
         if os.path.exists(temp_dir):
             os.rmdir(temp_dir)
 

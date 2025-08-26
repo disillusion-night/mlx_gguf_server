@@ -119,9 +119,9 @@ class LLMProcess:
         queue_info["request_queue_size"]  = self.request_queue.qsize()
         queue_info["response_queue_size"] = self.response_queue.qsize()
         queue_info["queues"] = self.queues
-        # for queue debbuging.
-        # print("Queue debugging start")
-        # self.print_queue_contents(self.response_queue)
+    # 用于队列调试。
+    # print("Queue debugging start")
+    # self.print_queue_contents(self.response_queue)
         return queue_info
 
     def get_cpu_usage(self):

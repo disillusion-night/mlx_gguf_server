@@ -26,16 +26,16 @@ def generate_stream(
     kv_cache_session_id = None,
 ):
     """
-    Generate text from the model.
+    从模型生成文本。
 
-    Args:
-       model (nn.Module): The language model.
-       tokenizer (PreTrainedTokenizer): The tokenizer.
-       prompt (str): The string prompt.
-       temp (float): The temperature for sampling (default 0).
-       max_tokens (int): The maximum number of tokens (default 100).
-       repetition_penalty (float, optional): The penalty factor for repeating tokens.
-       repetition_context_size (int, optional): The number of tokens to consider for repetition penalty.
+    参数说明:
+       model (nn.Module): 语言模型。
+       tokenizer (PreTrainedTokenizer): 分词器。
+       prompt (str): 输入提示字符串。
+       temp (float): 采样温度（默认为 0）。
+       max_tokens (int): 最大 token 数（默认为 100）。
+       repetition_penalty (float, optional): 重复 token 的惩罚因子。
+       repetition_context_size (int, optional): 用于重复惩罚的上下文 token 数量。
     """
     if not isinstance(tokenizer, TokenizerWrapper):
         tokenizer = TokenizerWrapper(tokenizer)
@@ -48,7 +48,7 @@ def generate_stream(
 
     stop_sequence_matched: bool = False
 
-    # 関数を選択し、適切な引数で呼び出すヘルパー関数
+    # 选择函数并以合适的参数调用相应的 helper 函数
     def call_generate_function(kv_cache_session_id, **kwargs):
         if kv_cache_session_id is not None:
             return ext_generate_step(kv_cache_session_id=kv_cache_session_id, **kwargs)
@@ -115,31 +115,23 @@ def ext_generate_step(
     kv_cache_session_id: Optional[int] = None,
 ) -> Generator[Tuple[mx.array, mx.array], None, None]:
     """
-    A generator producing token ids based on the given prompt from the model.
+    根据给定的提示从模型生成 token id 的生成器。
 
-    Args:
-        prompt (mx.array): The input prompt.
-        model (nn.Module): The model to use for generation.
-        temp (float): The temperature for sampling, if 0 the argmax is used.
-          Default: ``0``.
-        repetition_penalty (float, optional): The penalty factor for repeating
-          tokens.
-        repetition_context_size (int, optional): The number of tokens to
-          consider for repetition penalty. Default: ``20``.
-        top_p (float, optional): Nulceus sampling, higher means model considers
-          more less likely words.
-        min_p (float, optional): The minimum value (scaled by the top token's
-          probability) that a token probability must have to be considered.
-        min_tokens_to_keep (int, optional): Minimum number of tokens that cannot
-          be filtered by min_p sampling.
-        logit_bias (dictionary, optional): Additive logit bias.
-        prefill_step_size (int): Step size for processing the prompt.
-        max_kv_size (int, optional): Maximum size of the key-value cache. Old
-          entries (except the first 4 tokens) will be overwritten.
+    参数:
+        prompt (mx.array): 输入提示。
+        model (nn.Module): 用于生成的模型。
+        temp (float): 采样温度，若为 0 则使用 argmax。
+        repetition_penalty (float, optional): 重复 token 的惩罚因子。
+        repetition_context_size (int, optional): 用于重复惩罚的上下文 token 数，默认 20。
+        top_p (float, optional): nucleus 采样阈值。
+        min_p (float, optional): 最小概率阈值。
+        min_tokens_to_keep (int, optional): min_p 采样时至少保留的 token 数。
+        logit_bias (dict, optional): 额外的 logit 偏置。
+        prefill_step_size (int): 处理提示时的步长。
+        max_kv_size (int, optional): KV cache 的最大尺寸。
 
-    Yields:
-        Generator[Tuple[mx.array, mx.array], None, None]: A generator producing
-          one token and a vector of log probabilities.
+    返回:
+        生成器，每次产出一个 token 和对应的 log 概率向量。
     """
 
     def sample(logits: mx.array) -> Tuple[mx.array, float]:
@@ -224,7 +216,7 @@ def ext_generate_step(
     while True:
         next_y, next_logprobs = _step(y)
         mx.async_eval(next_y)
-        KVCacheManager.set_cache(kv_cache_session_id, cache) # yield 直前に session_cache を更新する
+        KVCacheManager.set_cache(kv_cache_session_id, cache) # 在 yield 之前更新 session_cache
         yield y.item(), logprobs
         y, logprobs = next_y, next_logprobs
 

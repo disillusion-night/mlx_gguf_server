@@ -13,8 +13,8 @@ from .task_response import TaskResponse
 
 class GenerationService:
     """
-    LLMのテキスト生成 (completions_stream) を専門に行うサービス。
-    LLMModelから委譲されて、生成処理を実行する。
+    专门处理 LLM 的文本生成（completions_stream）。
+    接收来自 LLMModel 的委托并执行生成处理。
     """
 
     def __init__(self):
@@ -22,7 +22,7 @@ class GenerationService:
 
     def generate_completion(self, llm_model: LLMModel, params :Any) -> Generator[Dict[str, Any], None, None]:
         """
-        テキスト生成を実行。stream対応。
+        执行文本生成。支持流式输出。
         """
 
         if not isinstance(llm_model, LLMModel):
@@ -62,7 +62,7 @@ class GenerationService:
     ) -> Generator[Dict[str, Any], None, None]:
         from mlx_lm.generate import stream_generate
 
-        # パラメータの統合
+        # 参数的汇总
         gen_params = self._build_mlx_params(default_gen_params, params)
         sampler = make_sampler(gen_params["temperature"], top_p=gen_params["top_p"])
         logits_processors = make_logits_processors(
@@ -85,7 +85,7 @@ class GenerationService:
             if params.apply_chat_template:
                 messages = params.messages
 
-                # KV Cacheの利用（use_kv_cacheがTrueの場合）
+                # KV Cache 的利用（当 use_kv_cache 为 True 时）
                 if params.use_kv_cache:
                     kv_cache, kv_cache_metadata, index, kv_load_stats = load_kv_cache(model, messages)
                     prompt = self.tokenizer_service.apply_chat_template(
@@ -102,7 +102,7 @@ class GenerationService:
             else:
                 prompt = params.prompt
 
-            # 生成処理
+            # 生成处理
             start_time = time.perf_counter()
             is_first_token = True
 
@@ -119,7 +119,7 @@ class GenerationService:
                 token = item.token
                 all_tokens.append(token)
 
-                # stop sequenceチェック
+                # stop sequence 检查
                 if self._check_stop(params.stop, all_tokens, tokenizer):
                     del all_tokens[-1]
                     break
@@ -134,7 +134,7 @@ class GenerationService:
                     prompt_eval_time = time.perf_counter()
                     is_first_token = False
 
-            # 非stream時の最終結果
+            # stream 时的最终结果
             if not params.stream:
                 text = tokenizer.decode(all_tokens)
                 response = self._create_final_response(
@@ -143,14 +143,14 @@ class GenerationService:
                 response["usage"] = self._calculate_usage(prompt, all_tokens, tokenizer, start_time, prompt_eval_time)
                 yield response
 
-            # complete_textの有無に関わらず、usageを含む応答を返す
+            # complete_text 的有无无关，返回包含 usage 的响应
             generate_time = time.perf_counter()
             perf_timer = [start_time, prompt_eval_time, generate_time] if 'prompt_eval_time' in locals() else []
 
             response = self._create_usage_response(request_id, created_time, model_name)
             response["usage"] = self._calculate_usage(prompt, all_tokens, tokenizer, *perf_timer)
 
-            # KV Cacheの保存
+            # KV Cache 的保存
             if params.use_kv_cache and kv_cache is not None:
                 cached_token_count = response["usage"]["total_tokens"] + int(kv_cache_metadata.get("token_count", 0))
                 kv_cache_metadata["model_name"] = str(model_name)

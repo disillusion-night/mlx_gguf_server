@@ -4,7 +4,7 @@ from typing import List
 @dataclass
 class OpenAICompatibleEmbedding:
     """
-    Response Body of Embedding API. Referred by OpenAI API.
+    响应主体的嵌入 API。由 OpenAI API 引用。
     Ref: https://platform.openai.com/docs/api-reference/embeddings/object
     """
     object: str
@@ -14,7 +14,7 @@ class OpenAICompatibleEmbedding:
 @dataclass
 class OpenAICompatibleEmbeddings:
     """
-    List of OpenAICompatibleEmbedding.
+    OpenAICompatibleEmbedding 的列表。
     """
     embeddings: List[OpenAICompatibleEmbedding]
 

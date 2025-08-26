@@ -1,3 +1,7 @@
+"""
+嵌入生成子进程的入口与处理逻辑。接收参数并返回 embedding 结果。
+"""
+
 from typing import List
 from .embedding_schemas import OpenAICompatibleEmbedding, OpenAICompatibleEmbeddings
 from transformers import AutoModel, AutoTokenizer
@@ -24,7 +28,7 @@ def run(params: dict, queue):
 
         openai_embeddings: List[OpenAICompatibleEmbedding] = []
  
-        # check token lengh
+        # 检查 token 长度
         for i, text in enumerate(texts): 
             tokens = tokenizer.tokenize(text)
             token_length = len(tokens)
@@ -32,14 +36,14 @@ def run(params: dict, queue):
                 queue.put(TokenLimitExceededError(index=i, length=token_length))
                 return
 
-        # embedding
+        # 执行 embedding
         if dimensions is None:
             embeddings = model.encode(texts, task="text-matching")
         else:
             embeddings = model.encode(texts, task="text-matching", truncate_dim=dimensions)
 
         for embedding in embeddings:
-            # embedding は NumPy 配列なので、float のリストに変換
+            # embedding 是 NumPy 数组，因此将其转换为 float 的列表
             if isinstance(embedding, np.ndarray):
                 embedding = embedding.tolist()
 

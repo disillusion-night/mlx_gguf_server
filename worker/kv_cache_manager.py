@@ -39,15 +39,15 @@ def save_kv_cache(message_id: str, kv_cache: List[any], metadata: Dict):
 
 def clean_kv_cache():
     """
-    KVキャッシュディレクトリのサイズがmax_kv_size(デフォルト10GB)を超える場合に、
-    最も古いファイルを削除する関数。条件を満たさなくなるまで再帰的に実行する。
-    max_kv_size は、mlx_gguf_server 起動時の引数 "--max-kv-size" で決定する。
+    清理 KV 缓存目录。当 KV 缓存目录的大小超过 max_kv_size（默认 10GB）时，
+    递归删除最旧的文件，直到不再超过阈值。
+    max_kv_size 由 mlx_gguf_server 启动时的参数 "--max-kv-size" 决定。
     """
     max_kv_size_gb = os.environ.get("MAX_KV_SIZE_GB", 10)
     max_kv_size = int(max_kv_size_gb) * (1024 ** 3)
 
-    def get_dir_size(path):
-        """ディレクトリのサイズを再帰的に計算する"""
+    def get_dir_size(path: str) -> int:
+        """递归计算目录大小并返回字节数"""
         total_size = 0
         for dirpath, _, filenames in os.walk(path):
             for f in filenames:
@@ -56,8 +56,8 @@ def clean_kv_cache():
                     total_size += os.path.getsize(fp)
         return total_size
 
-    def get_oldest_file(path):
-        """ディレクトリ内の最も古い(最終変更時刻)ファイルのパスを返す。ファイルがない場合はNoneを返す"""
+    def get_oldest_file(path: str) -> str:
+        """返回目录中最旧（以最后修改时间计）的文件路径；如果没有文件则返回 None"""
         files = [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
         if not files:
             return None
