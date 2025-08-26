@@ -44,8 +44,7 @@ def create_adapter_list():
         if os.path.isdir(full) or os.path.isfile(full):
             adapter_name = f
             adapter_path = full
-            adapter_size = get_model_size(adapter_path)
-            adapters[adapter_name] = {"path": adapter_path, "size": adapter_size}
+            adapters[adapter_name] = {"path": adapter_path}
 
     return adapters
 

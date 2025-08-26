@@ -404,10 +404,9 @@ def get_v1_internal_adapter_list():
     """返回已扫描到的 adapter 列表（仅 name 与 size，不暴露文件系统路径）。"""
     adapters = getattr(app.state, "adapters", {}) or {}
     adapter_entries = []
-    for name, meta in adapters.items():
+    for name in adapters.items():
         adapter_entries.append({
-            "name": name,
-            "size_gb": meta.get("size", 0)
+            "name": name
         })
     adapter_entries = sorted(adapter_entries, key=lambda x: x["name"])
     return {"adapters": adapter_entries}
