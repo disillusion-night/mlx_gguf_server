@@ -29,6 +29,7 @@ ENV/
 env/
 .venv/
 mlx_gguf_server/
+package-lock.json
 
 # PyCharm
 .idea/
