@@ -34,6 +34,9 @@ package-lock.json
 # PyCharm
 .idea/
 
+# Pyenv
+.python-version
+
 # VS Code
 .vscode/
 
@@ -48,7 +51,14 @@ logs/
 tmp/
 *.tmp
 
+# Local environments
+.env
+
 models/
 !models/store_model_files_here.txt
-
 adapters/
+whisper_stt/uploads
+worker/kv_cache
+
+# Exclude all .gitkeep file
+!**/.gitkeep
